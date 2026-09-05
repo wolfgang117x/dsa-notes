@@ -172,7 +172,7 @@
 <h1>Two Pointers: Converging Pattern</h1>
 <p><strong>Core Concept:</strong> Use two indices starting at opposite ends of a sequence, moving toward each other based on a condition derived from sorted order or monotonic properties. This reduces O(N²) brute force searches to O(N) linear scans.</p>
 
-<h2>1. Why It Works (Generalized)</h2>
+<h2>1. Why It Works</h2>
 <p>The pattern relies entirely on <strong>Monotonicity</strong>. If an array is sorted (or has a predictable gradient like area in Container With Most Water), moving a pointer in one direction guarantees a predictable change in the computed value.</p>
 <ul>
     <li><strong>If value &lt; target:</strong> We need a larger value → Move Left Pointer Right (increase).</li>
