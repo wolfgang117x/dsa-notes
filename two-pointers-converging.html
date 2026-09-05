@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two Pointers: Converging Pattern | DSA Revision</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #202122;
+            --heading-color: #111;
+            --accent-blue: #3366cc;
+            --accent-red: #d33;
+            --code-bg: #f8f9fa;
+            --border-color: #a2a9b1;
+            --highlight-bg: #f0f4ff;
+            --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Lato, Helvetica, Arial, sans-serif;
+            --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: var(--font-main);
+            color: var(--text-color);
+            background: var(--bg-color);
+            line-height: 1.6;
+            padding: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1, h2, h3 { color: var(--heading-color); margin-top: 1.5em; margin-bottom: 0.5em; border-bottom: 1px solid var(--border-color); padding-bottom: 0.2em;}
+        h1 { font-size: 2rem; border-bottom: 2px solid var(--heading-color); margin-top: 0; }
+        h2 { font-size: 1.5rem; }
+        h3 { font-size: 1.2rem; border-bottom: none; margin-top: 1em;}
+        p { margin-bottom: 1em; }
+        ul, ol { margin-left: 2em; margin-bottom: 1em; }
+        li { margin-bottom: 0.3em; }
+
+        code {
+            font-family: var(--font-mono);
+            background: var(--code-bg);
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+            font-size: 0.9em;
+            border: 1px solid #eaecf0;
+        }
+        pre {
+            background: var(--code-bg);
+            padding: 1em;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 1em;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+        pre code { background: none; border: none; padding: 0; }
+
+        /* Interactive Debugger Visualization */
+        .viz-container {
+            border: 2px solid var(--heading-color);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            background: var(--highlight-bg);
+            border-radius: 6px;
+        }
+        .viz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;}
+        .viz-controls { display: flex; gap: 0.5rem; }
+        
+        button {
+            padding: 0.5em 1.2em;
+            cursor: pointer;
+            background: var(--heading-color);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            font-family: inherit;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.85; }
+        button.secondary { background: var(--border-color); color: var(--heading-color); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .array-viz {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            align-items: flex-end;
+            margin: 2rem 0 3rem 0;
+            min-height: 120px;
+        }
+        .cell-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            width: 44px;
+        }
+        .ptr-top { 
+            height: 24px; 
+            display: flex; align-items: flex-end; justify-content: center;
+            font-size: 0.7rem; font-weight: bold; color: var(--accent-blue);
+            margin-bottom: 4px;
+        }
+        .cell {
+            width: 40px;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid var(--border-color);
+            background: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        .cell.active-l { border-color: var(--accent-red); background: #fff5f5; }
+        .cell.active-r { border-color: var(--accent-blue); background: #f0f4ff; }
+        .cell.active-both { border-color: #93c; background: #fdf5ff; }
+        
+        .ptr-bot { 
+            height: 24px; 
+            display: flex; align-items: flex-start; justify-content: center;
+            font-size: 0.7rem; font-weight: bold; color: var(--accent-red);
+            margin-top: 4px;
+        }
+        .index-label { font-size: 0.6rem; color: #888; margin-top: 2px; }
+        
+        .state-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .state-box {
+            background: white;
+            padding: 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+        }
+        .state-box h4 { 
+            font-family: var(--font-main); 
+            font-size: 0.75rem; 
+            text-transform: uppercase; 
+            letter-spacing: 0.05em;
+            margin-bottom: 0.4rem;
+            color: #666;
+        }
+        .state-box.current { border-left: 4px solid var(--accent-red); }
+        .state-box.decision { border-left: 4px solid var(--heading-color); grid-column: 1 / -1; }
+        
+        .highlight-val { font-weight: bold; color: var(--heading-color); }
+        .math { color: #555; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 1em; font-size: 0.9rem; }
+        th, td { border: 1px solid var(--border-color); padding: 0.5em; text-align: left; }
+        th { background: var(--code-bg); }
+
+        @media (max-width: 600px) {
+            body { padding: 1rem; }
+            .cell-wrapper { width: 32px; }
+            .cell { width: 28px; font-size: 0.7rem; }
+            .state-panel { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<h1>Two Pointers: Converging Pattern</h1>
+<p><strong>Core Concept:</strong> Use two indices starting at opposite ends of a sequence, moving toward each other based on a condition derived from sorted order or monotonic properties. This reduces O(N²) brute force searches to O(N) linear scans.</p>
+
+<h2>1. Why It Works (Generalized)</h2>
+<p>The pattern relies entirely on <strong>Monotonicity</strong>. If an array is sorted (or has a predictable gradient like area in Container With Most Water), moving a pointer in one direction guarantees a predictable change in the computed value.</p>
+<ul>
+    <li><strong>If value &lt; target:</strong> We need a larger value → Move Left Pointer Right (increase).</li>
+    <li><strong>If value &gt; target:</strong> We need a smaller value → Move Right Pointer Left (decrease).</li>
+    <li><strong>Termination:</strong> Pointers meet (<code>left >= right</code>).</li>
+</ul>
+
+<h3>Interactive Debugger: Container With Most Water</h3>
+<div class="viz-container">
+    <div class="viz-header">
+        <span style="font-size:0.85rem; font-weight:600;">Problem 11: Maximize Area = min(h[l], h[r]) × (r - l)</span>
+        <div class="viz-controls">
+            <button id="btnStep" onclick="vizEvaluate()">Evaluate Current</button>
+            <button id="btnMove" class="secondary" onclick="vizApplyMove()" disabled>Apply Move →</button>
+            <button class="secondary" onclick="vizReset()">Reset</button>
+        </div>
+    </div>
+    
+    <div class="array-viz" id="vizArray"></div>
+    
+    <div class="state-panel">
+        <div class="state-box current" id="boxCurrent">
+            <h4>📍 Before Evaluation</h4>
+            <div id="currentState">Waiting...</div>
+        </div>
+        <div class="state-box" id="boxResult" style="opacity:0.4;">
+            <h4>📊 Calculation Result</h4>
+            <div id="calcResult">-</div>
+        </div>
+        <div class="state-box decision" id="boxDecision" style="opacity:0.4;">
+            <h4>🧠 Decision Logic</h4>
+            <div id="decisionText">Click "Evaluate Current" to analyze this state.</div>
+        </div>
+    </div>
+</div>
+
+<h2>2. Problem Analysis Matrix</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Problem</th>
+            <th>Variant</th>
+            <th>Key Insight / Movement Logic</th>
+            <th>Complexity</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>11. Container With Most Water</td>
+            <td>Optimization</td>
+            <td>Move the pointer with the <em>smaller</em> height inward. Moving the taller one can never increase area because width decreases and height is capped by the shorter side.</td>
+            <td>O(N) Time, O(1) Space</td>
+        </tr>
+        <tr>
+            <td>167. Two Sum II</td>
+            <td>Target Search</td>
+            <td>Standard binary-search-like movement. Sum too big? R--. Sum too small? L++.</td>
+            <td>O(N) Time, O(1) Space</td>
+        </tr>
+        <tr>
+            <td>977. Squares of Sorted Array</td>
+            <td>Merge/Transform</td>
+            <td>Negatives become large positives when squared. Compare abs(L) vs abs(R), place larger square at end of result array, fill backwards.</td>
+            <td>O(N) Time, O(N) Space</td>
+        </tr>
+        <tr>
+            <td>881. Boats to Save People</td>
+            <td>Greedy Matching</td>
+            <td>Sort. Try to pair heaviest (R) with lightest (L). If they fit, L++. Always R--. Each person needs at most one boat.</td>
+            <td>O(N log N) Sort + O(N) Scan</td>
+        </tr>
+        <tr>
+            <td>15. 3Sum / 16. Closest / 259. Smaller</td>
+            <td>K-Sum Reduction</td>
+            <td>Fix first element (loop), then apply 2Sum converging pointers on remaining subarray. Skip duplicates for unique results.</td>
+            <td>O(N²) Time, O(1) Extra Space</td>
+        </tr>
+        <tr>
+            <td>18. 4Sum</td>
+            <td>K-Sum Reduction</td>
+            <td>Fix first two elements (nested loops), then 2Sum converging pointers on remainder.</td>
+            <td>O(N³) Time, O(1) Extra Space</td>
+        </tr>
+        <tr>
+            <td>349. Intersection of Two Arrays</td>
+            <td>Set Comparison</td>
+            <td>Sort both. Advance pointer pointing to smaller value. Equal? Record & advance both. Handles duplicates naturally.</td>
+            <td>O(N log N + M log M)</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>3. Criteria: When to Use (and When Not To)</h2>
+<h3>✅ Apply When:</h3>
+<ul>
+    <li>Input is <strong>sorted</strong> or can be sorted without losing necessary index info.</li>
+    <li>You are looking for pairs/triplets satisfying a condition (sum, product, area).</li>
+    <li>You need to compare elements from both ends moving inward (palindrome, merge, partition).</li>
+    <li>Brute force is O(N²) but the relationship between adjacent elements is monotonic.</li>
+</ul>
+<h3>❌ Do NOT Use When:</h3>
+<ul>
+    <li>Data is unsorted AND sorting destroys required information (e.g., original indices matter and you can't store them).</li>
+    <li>No monotonic property exists (random data where moving L/R gives no directional hint).</li>
+    <li>You need all possible combinations regardless of order (use backtracking/bitmask).</li>
+    <li>Hash Map O(N) solution exists for unsorted data (e.g., standard Two Sum I).</li>
+</ul>
+
+<h2>4. Tradeoffs</h2>
+<ul>
+    <li><strong>Pros:</strong> Optimal time complexity, usually O(1) extra space (in-place), simple implementation.</li>
+    <li><strong>Cons:</strong> Requires sorted input (O(N log N) preprocessing cost), tricky boundary conditions (off-by-one errors), duplicate handling logic adds verbosity.</li>
+    <li><strong>Vs Hash Map:</strong> Two pointers wins on space (O(1) vs O(N)) and often constant factors. Hash map wins if data cannot be sorted.</li>
+</ul>
+
+<h2>5. Java Templates</h2>
+
+<h3>A. Basic Converging (Two Sum II / Container)</h3>
+<pre><code>// Template for finding pair with condition in sorted array
+int left = 0, right = arr.length - 1;
+while (left < right) {
+    int current = compute(arr[left], arr[right]);
+    
+    if (current == target) {
+        // Found exact match
+        return new int[]{left, right};
+    } else if (current < target) {
+        left++;   // Need larger value
+    } else {
+        right--;  // Need smaller value
+    }
+}
+return -1; // Not found</code></pre>
+
+<h3>B. K-Sum Generic (3Sum / 4Sum / Closest)</h3>
+<pre><code>// 3Sum Template - Extendable to K-Sum via recursion
+List<List<Integer>> threeSum(int[] nums) {
+    Arrays.sort(nums); // CRITICAL
+    List<List<Integer>> res = new ArrayList<>();
+    
+    for (int i = 0; i < nums.length - 2; i++) {
+        // Skip duplicate anchors
+        if (i > 0 && nums[i] == nums[i-1]) continue;
+        
+        int left = i + 1, right = nums.length - 1;
+        while (left < right) {
+            int sum = nums[i] + nums[left] + nums[right];
+            if (sum == 0) {
+                res.add(Arrays.asList(nums[i], nums[left], nums[right]));
+                // Skip duplicates for L and R
+                while (left < right && nums[left] == nums[++left]);
+                while (left < right && nums[right] == nums[--right]);
+            } else if (sum < 0) {
+                left++;
+            } else {
+                right--;
+            }
+        }
+    }
+    return res;
+}</code></pre>
+
+<h3>C. Greedy Pairing (Boats to Save People)</h3>
+<pre><code>// Pair heaviest with lightest greedily
+Arrays.sort(people);
+int boats = 0, l = 0, r = people.length - 1;
+while (l <= r) { // Note: <= because single person still needs boat
+    if (people[l] + people[r] <= limit) {
+        l++; // Light person paired successfully
+    }
+    r--;     // Heavy person always takes a boat
+    boats++;
+}</code></pre>
+
+<h3>D. Dual Array Merge (Intersection / Squares)</h3>
+<pre><code>// Intersection of Two Sorted Arrays
+int i = 0, j = 0;
+Set<Integer> intersection = new HashSet<>();
+while (i < a.length && j < b.length) {
+    if (a[i] == b[j]) {
+        intersection.add(a[i]);
+        i++; j++;
+    } else if (a[i] < b[j]) {
+        i++;
+    } else {
+        j++;
+    }
+}</code></pre>
+
+<script>
+// --- Corrected Interactive Visualization Logic ---
+const heights = [1, 8, 6, 2, 5, 4, 8, 3, 7];
+let state = {
+    l: 0,
+    r: heights.length - 1,
+    maxArea: 0,
+    phase: 'IDLE', // IDLE -> EVALUATED -> MOVED -> EVALUATED...
+    pendingMove: null // 'L++' or 'R--'
+};
+
+const els = {
+    array: document.getElementById('vizArray'),
+    btnStep: document.getElementById('btnStep'),
+    btnMove: document.getElementById('btnMove'),
+    currentState: document.getElementById('currentState'),
+    calcResult: document.getElementById('calcResult'),
+    decisionText: document.getElementById('decisionText'),
+    boxResult: document.getElementById('boxResult'),
+    boxDecision: document.getElementById('boxDecision')
+};
+
+function renderArray() {
+    els.array.innerHTML = '';
+    const maxH = Math.max(...heights);
+    
+    heights.forEach((h, idx) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'cell-wrapper';
+        
+        // Top pointer label (Right pointer)
+        const ptrTop = document.createElement('div');
+        ptrTop.className = 'ptr-top';
+        ptrTop.textContent = (idx === state.r) ? `R=${idx}` : '';
+        wrapper.appendChild(ptrTop);
+        
+        // Cell
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.textContent = h;
+        cell.style.height = Math.max(30, (h / maxH) * 100) + 'px';
+        
+        if (idx === state.l && idx === state.r) cell.classList.add('active-both');
+        else if (idx === state.l) cell.classList.add('active-l');
+        else if (idx === state.r) cell.classList.add('active-r');
+        
+        wrapper.appendChild(cell);
+        
+        // Bottom pointer label (Left pointer)
+        const ptrBot = document.createElement('div');
+        ptrBot.className = 'ptr-bot';
+        ptrBot.textContent = (idx === state.l) ? `L=${idx}` : '';
+        wrapper.appendChild(ptrBot);
+        
+        // Index label
+        const idxLbl = document.createElement('div');
+        idxLbl.className = 'index-label';
+        idxLbl.textContent = idx;
+        wrapper.appendChild(idxLbl);
+        
+        els.array.appendChild(wrapper);
+    });
+}
+
+function updateUI() {
+    renderArray();
+    
+    if (state.phase === 'IDLE') {
+        els.currentState.innerHTML = `<span class="highlight-val">L=${state.l}</span>, <span class="highlight-val">R=${state.r}</span>`;
+        els.boxResult.style.opacity = '0.4';
+        els.calcResult.textContent = '-';
+        els.boxDecision.style.opacity = '0.4';
+        els.decisionText.textContent = 'Click "Evaluate Current" to analyze this state.';
+        
+        els.btnStep.disabled = false;
+        els.btnStep.textContent = 'Evaluate Current';
+        els.btnMove.disabled = true;
+        
+    } else if (state.phase === 'EVALUATED') {
+        els.boxResult.style.opacity = '1';
+        els.boxDecision.style.opacity = '1';
+        
+        els.btnStep.disabled = true;
+        els.btnMove.disabled = false;
+        els.btnMove.textContent = `Apply Move (${state.pendingMove}) →`;
+    }
+}
+
+function vizEvaluate() {
+    if (state.l >= state.r) {
+        els.currentState.innerHTML = `<span class="highlight-val">L=${state.l}</span> ≥ <span class="highlight-val">R=${state.r}</span>`;
+        els.calcResult.innerHTML = `✅ <strong>TERMINATED</strong><br>Max Area Found: <span class="highlight-val">${state.maxArea}</span>`;
+        els.decisionText.textContent = 'Pointers have met or crossed. Algorithm complete.';
+        els.boxResult.style.opacity = '1';
+        els.boxDecision.style.opacity = '1';
+        els.btnStep.disabled = true;
+        els.btnMove.disabled = true;
+        return;
+    }
+    
+    const hL = heights[state.l];
+    const hR = heights[state.r];
+    const width = state.r - state.l;
+    const area = Math.min(hL, hR) * width;
+    state.maxArea = Math.max(state.maxArea, area);
+    
+    // Determine move
+    if (hL < hR) {
+        state.pendingMove = 'L++';
+    } else {
+        state.pendingMove = 'R--';
+    }
+    
+    // Update UI with calculation
+    els.calcResult.innerHTML = `
+        <div class="math">min(${hL}, ${hR}) × (${state.r} - ${state.l})</div>
+        <div class="math">= ${Math.min(hL, hR)} × ${width}</div>
+        <div style="margin-top:4px;">Area = <span class="highlight-val">${area}</span> | Max = <span class="highlight-val">${state.maxArea}</span></div>
+    `;
+    
+    // Update decision
+    if (hL < hR) {
+        els.decisionText.innerHTML = `
+            h[L]=<span class="highlight-val">${hL}</span> &lt; h[R]=<span class="highlight-val">${hR}</span><br>
+            Left wall is the bottleneck. Moving R-- would only decrease width while height remains capped at ${hL}.<br>
+            <strong>→ Must move L++ to potentially find a taller left wall.</strong>
+        `;
+    } else {
+        els.decisionText.innerHTML = `
+            h[R]=<span class="highlight-val">${hR}</span> ≤ h[L]=<span class="highlight-val">${hL}</span><br>
+            Right wall is the bottleneck. Moving L++ would only decrease width while height remains capped at ${hR}.<br>
+            <strong>→ Must move R-- to potentially find a taller right wall.</strong>
+        `;
+    }
+    
+    state.phase = 'EVALUATED';
+    updateUI();
+}
+
+function vizApplyMove() {
+    if (state.pendingMove === 'L++') {
+        state.l++;
+    } else if (state.pendingMove === 'R--') {
+        state.r--;
+    }
+    
+    state.phase = 'IDLE';
+    state.pendingMove = null;
+    updateUI();
+}
+
+function vizReset() {
+    state = {
+        l: 0,
+        r: heights.length - 1,
+        maxArea: 0,
+        phase: 'IDLE',
+        pendingMove: null
+    };
+    updateUI();
+}
+
+// Initialize
+updateUI();
+</script>
+
+<hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border-color);">
+<p style="font-size: 0.8rem; color: #666; text-align: center;">
+    Generated for DSA Revision • Covers LeetCode 11, 15, 16, 18, 167, 259, 349, 881, 977<br>
+    Self-contained HTML • No external dependencies
+</p>
+
+</body>
+</html>
